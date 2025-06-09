@@ -1,0 +1,15 @@
+pipeline {
+  agent any
+
+  stages {
+    stage ('Cleanup Working Directory') {
+      cleanWs()
+    }
+
+    stage ('Trivy File Scan') {
+      steps {
+        sh "trivy fs --format table -o fs.html ."         
+      }
+    }
+  }
+}
