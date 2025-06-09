@@ -3,7 +3,11 @@ pipeline {
 
   stages {
     stage ('Cleanup Working Directory') {
-      cleanWs()
+      steps {
+        script {
+          cleanWs()
+        }
+      }
     }
 
     stage ('Trivy File Scan') {
