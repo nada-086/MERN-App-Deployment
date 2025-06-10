@@ -14,6 +14,12 @@ pipeline {
       }
     }
 
+    stage('Code Checkout') {
+      steps {
+        git url: "https://github.com/nada-086/MERN-App-Deployment.git", branch: "master"
+      }
+    }
+
     stage ('Trivy File Scan') {
       steps {
         sh "trivy fs --format table -o fs.html ."         
@@ -35,5 +41,21 @@ pipeline {
         }
       }
     }
+
+    stage ('Build Frontend Docker Image') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'dockerhubpass', usernameVariable: 'dockerhubuser')]) {
+          sh "docker login -u ${dockerhubuser} -p ${dockerhubpass}"
+        }
+
+        sh '''
+          cd ./src/frontend
+          docker build --tag nadaessa/bookstore-frontend:v${BUILD_NUMBER} .
+          docker push nadaessa/bookstore-frontend:v${BUILD_NUMBER}
+        '''
+      }
+    }
+
+    
   }
 }
