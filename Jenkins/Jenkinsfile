@@ -1,6 +1,8 @@
 pipeline {
   agent any
 
+  Parameter
+
   stages {
     stage ('Cleanup Working Directory') {
       steps {
@@ -13,6 +15,28 @@ pipeline {
     stage ('Trivy File Scan') {
       steps {
         sh "trivy fs --format table -o fs.html ."         
+      }
+    }
+
+    stage('SonarQube: Code Analysis') {
+      steps {
+        withSonarQubeEnv("sonar"){
+          sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=bookstore -Dsonar.projectKey=bookstore -X"
+        }
+      }
+    }
+        
+    stage("SonarQube: Code Quality Gates"){
+      steps {
+        timeout(time: 5, unit: "MINUTES"){
+          waitForQualityGate abortPipeline: false
+        }
+      }
+    }
+
+    stage ('Build Docker Image') {
+      steps {
+
       }
     }
   }
