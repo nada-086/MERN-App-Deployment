@@ -102,7 +102,7 @@ withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 
 ``` bash 
 docker push nadaessa/bookstore-frontend:v${BUILD_NUMBER}
 ```
-Stage 6: Build Backend Docker Image
+### Stage 6: Build Backend Docker Image
 📋 Description
 This Jenkins pipeline stage builds a Docker image for the backend part of the application and pushes it to Docker Hub. Each image is tagged with the current Jenkins build number for versioning and traceability.
 
