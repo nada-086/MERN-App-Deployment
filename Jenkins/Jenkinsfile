@@ -1,7 +1,9 @@
 pipeline {
   agent any
 
-  Parameter
+   environment{
+        SONAR_HOME = tool "sonar"
+    }
 
   stages {
     stage ('Cleanup Working Directory') {
@@ -31,12 +33,6 @@ pipeline {
         timeout(time: 5, unit: "MINUTES"){
           waitForQualityGate abortPipeline: false
         }
-      }
-    }
-
-    stage ('Build Docker Image') {
-      steps {
-
       }
     }
   }
