@@ -14,25 +14,68 @@ pipeline {
       }
     }
 
+    stage('Code Checkout') {
+      steps {
+        git url: "https://github.com/nada-086/MERN-App-Deployment.git", branch: "master"
+      }
+    }
+
     stage ('Trivy File Scan') {
       steps {
         sh "trivy fs --format table -o fs.html ."         
       }
     }
 
-    stage('SonarQube: Code Analysis') {
+    // stage('SonarQube: Code Analysis') {
+    //   steps {
+    //     withSonarQubeEnv("sonar"){
+    //       sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=bookstore -Dsonar.projectKey=bookstore -X"
+    //     }
+    //   }
+    // }
+        
+    // stage("SonarQube: Code Quality Gates"){
+    //   steps {
+    //     timeout(time: 5, unit: "MINUTES"){
+    //       waitForQualityGate abortPipeline: false
+    //     }
+    //   }
+    // }
+
+    stage ('Build Docker Images') {
       steps {
-        withSonarQubeEnv("sonar"){
-          sh "$SONAR_HOME/bin/sonar-scanner -Dsonar.projectName=bookstore -Dsonar.projectKey=bookstore -X"
-        }
+        sh '''
+          cd ./src/frontend
+          docker build --tag nadaessa/bookstore-frontend:v${BUILD_NUMBER} .
+        '''
+
+        sh '''
+          cd ./src/backend
+          docker build --tag nadaessa/bookstore-backend:v${BUILD_NUMBER} .
+        '''
       }
     }
-        
-    stage("SonarQube: Code Quality Gates"){
+
+    stage ('Scanning Docker Images') {
       steps {
-        timeout(time: 5, unit: "MINUTES"){
-          waitForQualityGate abortPipeline: false
+        sh '''
+          trivy image --format table --output frontend-image-scan.html \
+            nadaessa/bookstore-frontend:v${BUILD_NUMBER}
+          trivy image --format table --output backend-image-scan.html \
+            nadaessa/bookstore-backend:v${BUILD_NUMBER}
+        '''
+      }
+    }
+
+    stage ('Pushing Docker Images to DockerHub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'dockerhubpass', usernameVariable: 'dockerhubuser')]) {
+          sh "docker login -u ${dockerhubuser} -p ${dockerhubpass}"
         }
+        sh '''
+          docker push nadaessa/bookstore-frontend:v${BUILD_NUMBER}
+          docker push nadaessa/bookstore-backend:v${BUILD_NUMBER}
+        '''
       }
     }
   }
